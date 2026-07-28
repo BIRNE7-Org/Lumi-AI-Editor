@@ -684,17 +684,17 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           assistantMessage: {
             id: `msg-${Date.now()}`,
             role: 'assistant' as const,
-            content: `Super! Dein Arbeitsblatt wird sich mit "${userInput}" befassen.\n\nWer ist die Zielgruppe?`,
+            content: `Super! Dein Arbeitsblatt wird sich mit "${userInput}" befassen.\n\nWie schwer soll dein Lern-Kurs sein?`,
           },
         };
       }
 
       if (creationState.step === 'asking_aspects') {
-        const { topic, audience, objectives, aspects } = creationState;
+        const { topic, difficulty, objectives, aspects } = creationState;
         const progressMessage = {
           id: `msg-${Date.now()}`,
           role: 'assistant' as const,
-          content: `Perfekt! Ich erstelle jetzt ein Arbeitsblatt über "${topic}" für ${audience}. Das kann einen Moment dauern...`,
+          content: `Perfekt! Ich erstelle jetzt ein Arbeitsblatt über "${topic}" im Schwierigkeitsgrad ${difficulty}. Das kann einen Moment dauern...`,
         };
 
         setChatState((prev) => ({
@@ -709,7 +709,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 <instruction_override>
 Du hast alle nötigen Informationen gesammelt:
 - Thema: "${topic}"
-- Zielgruppe: "${audience}"
+- Schwierigkeitsgrad: "${difficulty}"
 - Lernziele: "${objectives}"
 - Wichtige Aspekte/Unterthemen: "${aspects}"
 Erstelle JETZT direkt einen ersten vollständigen Entwurf auf Basis dieser Informationen. Stelle keine weitere Rückfrage.
@@ -721,7 +721,7 @@ Behalte das [WORKSHEET_UPDATE]-Format aus dem structured_output_contract exakt b
               { role: 'system', content: systemPrompt },
               {
                 role: 'user',
-                content: `Erstelle jetzt einen ersten Arbeitsblatt-Entwurf zum Thema "${topic}" für ${audience}. Lernziele: ${objectives}. Wichtige Aspekte: ${aspects}.`,
+                content: `Erstelle jetzt einen ersten Arbeitsblatt-Entwurf zum Thema "${topic}" im Schwierigkeitsgrad ${difficulty}. Lernziele: ${objectives}. Wichtige Aspekte: ${aspects}.`,
               },
             ],
             apiEndpoint,

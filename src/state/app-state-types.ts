@@ -72,7 +72,7 @@ export type AppActions = {
     creationState: {
       step: string;
       topic: string;
-      audience: string;
+      difficulty: string;
       objectives: string;
       aspects: string;
     };

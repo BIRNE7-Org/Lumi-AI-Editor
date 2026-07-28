@@ -16,8 +16,8 @@ import { useSpeech } from '@components/chat/use-speech';
 type LanguageModeContent = {
   greetingText: string;
   greetingSuggestions: string[];
-  audiencePromptText: (topic: string) => string;
-  audienceSuggestions: string[];
+  difficultyPromptText: (topic: string) => string;
+  difficultySuggestions: string[];
   objectivesText: string;
   objectivesSuggestions: string[];
   aspectsText: string;
@@ -149,17 +149,9 @@ const LANGUAGE_MODE_CONTENT: Record<string, LanguageModeContent> = {
       'Familie und Zusammenleben',
       'Träume und Ziele',
     ],
-    audiencePromptText: (topic) =>
-      `Super! Dein Arbeitsblatt geht um "${topic}".\n\nFür wen ist es gedacht?`,
-    audienceSuggestions: [
-      'Grundschule',
-      'Förderschule',
-      'Realschule',
-      'Gymnasium',
-      'Erwachsene',
-      'Senioren',
-      'Menschen mit Lernschwierigkeiten',
-    ],
+    difficultyPromptText: (topic) =>
+      `Super! Dein Arbeitsblatt geht um "${topic}".\n\nWie schwer soll dein Lern-Kurs sein?`,
+    difficultySuggestions: ['Leicht', 'Mittel', 'Schwer'],
     objectivesText: 'Was soll man danach wissen oder können?',
     objectivesSuggestions: [
       'Etwas Neues lernen',
@@ -195,15 +187,9 @@ const LANGUAGE_MODE_CONTENT: Record<string, LanguageModeContent> = {
       'Grammatik',
       'Globalisierung',
     ],
-    audiencePromptText: (topic) =>
-      `Super! Dein Arbeitsblatt wird sich mit "${topic}" befassen.\n\nWer ist die Zielgruppe?`,
-    audienceSuggestions: [
-      'Grundschule',
-      'Sekundarstufe I',
-      'Sekundarstufe II',
-      'Erwachsene',
-      'Berufsschule',
-    ],
+    difficultyPromptText: (topic) =>
+      `Super! Dein Arbeitsblatt wird sich mit "${topic}" befassen.\n\nWie schwer soll dein Lern-Kurs sein?`,
+    difficultySuggestions: ['Leicht', 'Mittel', 'Schwer'],
     objectivesText:
       'Verstanden! Was soll der Lernende nach dem Arbeitsblatt verstehen oder können? Was sind die Lernziele?',
     objectivesSuggestions: [
@@ -241,15 +227,9 @@ const LANGUAGE_MODE_CONTENT: Record<string, LanguageModeContent> = {
       'Europäische Integration',
       'Thermodynamik',
     ],
-    audiencePromptText: (topic) =>
-      `Das Arbeitsblatt wird das Thema „${topic}" behandeln.\n\nFür welche Zielgruppe und Kompetenzstufe ist es konzipiert?`,
-    audienceSuggestions: [
-      'Gymnasium Oberstufe',
-      'Hochschule / Studium',
-      'Berufsschule Fachklasse',
-      'Masterstudium',
-      'Weiterbildung Fachkräfte',
-    ],
+    difficultyPromptText: (topic) =>
+      `Das Arbeitsblatt wird das Thema „${topic}" behandeln.\n\nWie schwer soll dein Lern-Kurs sein?`,
+    difficultySuggestions: ['Leicht', 'Mittel', 'Schwer'],
     objectivesText: 'Welche fachlichen Kompetenzen oder Lernziele sollen vermittelt werden?',
     objectivesSuggestions: [
       'Konzepte analysieren und anwenden',
@@ -276,13 +256,13 @@ type CreationState = {
   step:
     | 'idle'
     | 'asking_topic'
-    | 'asking_audience'
+    | 'asking_difficulty'
     | 'asking_objectives'
     | 'asking_aspects'
     | 'generating'
     | 'done';
   topic: string;
-  audience: string;
+  difficulty: string;
   objectives: string;
   aspects: string;
 };
@@ -290,7 +270,7 @@ type CreationState = {
 const INITIAL_CREATION_STATE: CreationState = {
   step: 'idle',
   topic: '',
-  audience: '',
+  difficulty: '',
   objectives: '',
   aspects: '',
 };
@@ -349,7 +329,7 @@ export function ChatPanel({
     setCreationState({
       step: 'asking_topic',
       topic: '',
-      audience: '',
+      difficulty: '',
       objectives: '',
       aspects: '',
     });
@@ -371,24 +351,21 @@ export function ChatPanel({
         actions.chatMessageAdded({
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: withSuggestions(
-            content.audiencePromptText(value),
-            pickRandom(content.audienceSuggestions, 3)
-          ),
+          content: withSuggestions(content.difficultyPromptText(value), content.difficultySuggestions),
           createdAt: Date.now(),
         });
         setCreationState((prev) => ({
           ...prev,
-          step: 'asking_audience',
+          step: 'asking_difficulty',
           topic: value,
-          audience: '',
+          difficulty: '',
           objectives: '',
           aspects: '',
         }));
         return;
       }
 
-      if (creationState.step === 'asking_audience') {
+      if (creationState.step === 'asking_difficulty') {
         actions.chatMessageAdded(userMessage);
         actions.chatMessageAdded({
           id: crypto.randomUUID(),
@@ -399,7 +376,7 @@ export function ChatPanel({
           ),
           createdAt: Date.now(),
         });
-        setCreationState((prev) => ({ ...prev, step: 'asking_objectives', audience: value }));
+        setCreationState((prev) => ({ ...prev, step: 'asking_objectives', difficulty: value }));
         return;
       }
 
@@ -545,7 +522,7 @@ export function ChatPanel({
 
     if (
       creationState.step === 'asking_topic' ||
-      creationState.step === 'asking_audience' ||
+      creationState.step === 'asking_difficulty' ||
       creationState.step === 'asking_objectives' ||
       creationState.step === 'asking_aspects'
     ) {
@@ -566,7 +543,7 @@ export function ChatPanel({
 
       if (
         creationState.step === 'asking_topic' ||
-        creationState.step === 'asking_audience' ||
+        creationState.step === 'asking_difficulty' ||
         creationState.step === 'asking_objectives' ||
         creationState.step === 'asking_aspects'
       ) {
@@ -787,8 +764,8 @@ export function ChatPanel({
                 placeholder={
                   creationState.step === 'asking_topic'
                     ? content.topicPlaceholder
-                    : creationState.step === 'asking_audience'
-                      ? 'Wer ist die Zielgruppe?'
+                    : creationState.step === 'asking_difficulty'
+                      ? 'Wie schwer soll dein Lern-Kurs sein?'
                       : 'Schreibe eine Nachricht an Lumi...'
                 }
                 value={chatInput}
