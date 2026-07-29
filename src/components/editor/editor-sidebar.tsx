@@ -474,7 +474,7 @@ export const EditorSidebar = memo(function EditorSidebar({
           </div>
         ) : null}
         <button
-          className="btn btn-secondary btn-lg w-full gap-2"
+          className="btn btn-secondary btn-lg h-auto w-full flex-col items-start gap-1 py-3"
           data-tour-id="kurs-herunterladen"
           disabled={orderedContent.length === 0 || aiBusy !== null || h5pLoading}
           type="button"
@@ -483,8 +483,13 @@ export const EditorSidebar = memo(function EditorSidebar({
           }}
           onMouseEnter={preloadH5P}
         >
-          <ArchiveBoxArrowDownIcon className="size-4" />
-          {h5pLoading ? 'Kurs wird vorbereitet...' : 'Kurs herunterladen'}
+          <span className="flex items-center gap-2">
+            <ArchiveBoxArrowDownIcon className="size-4" />
+            {h5pLoading ? 'Kurs wird vorbereitet...' : 'Zum Mitmachen herunterladen'}
+          </span>
+          <span className="text-xs font-normal opacity-70">
+            Lern-Kurs zum anklicken und üben. Du lädtst eine H5P-Datei herunter.
+          </span>
         </button>
       </div>
 

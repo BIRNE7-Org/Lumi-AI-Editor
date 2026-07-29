@@ -203,7 +203,7 @@ export const PreviewSidebar = memo(function PreviewSidebar() {
 
       <div className="border-base-300 shrink-0 border-t px-5 py-4">
         <button
-          className="btn btn-primary btn-lg w-full gap-2"
+          className="btn btn-primary btn-lg h-auto w-full flex-col items-start gap-1 py-3"
           data-tour-id="pdf-herunterladen"
           disabled={!hasContent}
           type="button"
@@ -212,8 +212,13 @@ export const PreviewSidebar = memo(function PreviewSidebar() {
           }}
           onMouseEnter={preloadPdf}
         >
-          <ArrowDownTrayIcon className="size-4" />
-          {'Als PDF herunterladen'}
+          <span className="flex items-center gap-2">
+            <ArrowDownTrayIcon className="size-4" />
+            Zum Lesen und Ausdrucken herunterladen
+          </span>
+          <span className="text-xs font-normal opacity-70">
+            Lern-Kurs zum lesen und ausdrucken. Du lädtst eine PDF-Datei herunter.
+          </span>
         </button>
       </div>
     </aside>

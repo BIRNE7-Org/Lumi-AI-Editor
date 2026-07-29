@@ -47,12 +47,12 @@ export const COACH_MARK_CONTENT: Record<CoachMarkId, { title: string; body: stri
     body: 'Hier siehst du, wie dein Arbeitsblatt aussieht.',
   },
   'kurs-herunterladen': {
-    title: 'Kurs herunterladen',
-    body: 'Klicke hier, um deinen fertigen Kurs herunterzuladen.',
+    title: 'Zum Mitmachen herunterladen',
+    body: 'Lern-Kurs zum anklicken und üben. Du lädtst eine H5P-Datei herunter.',
   },
   'pdf-herunterladen': {
-    title: 'Als PDF herunterladen',
-    body: 'Klicke hier, um dein Arbeitsblatt als PDF herunterzuladen.',
+    title: 'Zum Lesen und Ausdrucken herunterladen',
+    body: 'Lern-Kurs zum lesen und ausdrucken. Du lädtst eine PDF-Datei herunter.',
   },
   'neues-gespraech': {
     title: 'Neues Gespräch',
