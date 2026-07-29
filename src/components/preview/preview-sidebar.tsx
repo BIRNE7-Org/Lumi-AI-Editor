@@ -20,9 +20,16 @@ function getDownloadFilename(title: string) {
 
 const EmptyPreview = memo(function EmptyPreview() {
   return (
-    <div className="rounded-box bg-base-200/80 text-base-content/70 flex h-full items-center justify-center p-6 text-center text-sm leading-6">
-      Noch kein Inhalt vorhanden. Nutze den Bearbeitungs-Modus oder den KI-Assistenten, um das Arbeitsblatt
-      aufzubauen.
+    <div className="rounded-box border-base-300 bg-base-200/80 flex h-full flex-col items-center justify-center gap-4 border border-dashed p-6 text-center">
+      <div className="bg-primary/10 text-primary rounded-full p-4">
+        <EyeIcon className="size-8" />
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-lg font-semibold">Noch keine Vorschau</h3>
+        <p className="text-base-content/70 max-w-xs text-sm leading-6">
+          Füge im Bearbeitungs-Modus oder mit dem KI-Assistenten Inhalte hinzu. Sie erscheinen dann hier.
+        </p>
+      </div>
     </div>
   );
 });
@@ -197,6 +204,7 @@ export const PreviewSidebar = memo(function PreviewSidebar() {
       <div className="border-base-300 shrink-0 border-t px-5 py-4">
         <button
           className="btn btn-primary btn-lg w-full gap-2"
+          data-tour-id="pdf-herunterladen"
           disabled={!hasContent}
           type="button"
           onClick={() => {

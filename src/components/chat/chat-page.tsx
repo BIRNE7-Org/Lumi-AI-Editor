@@ -9,6 +9,7 @@ import { EditorSidebar } from '@components/editor/editor-sidebar';
 import { PreviewSidebar } from '@components/preview/preview-sidebar';
 import { SIDE_PANEL_TOGGLE_WIDTH, SidePanel } from '@components/side-panel/side-panel';
 import { useKeybinds } from '@components/keybinds/use-keybinds';
+import { GuidedTour } from '@components/onboarding/guided-tour';
 
 const PANEL_WIDTH_DEFAULT = 360;
 const PREVIEW_WIDTH_DEFAULT = 380;
@@ -19,7 +20,16 @@ export function ChatPage() {
   const editor = useEditorState();
   const actions = useAppActions();
   const { toggleMode } = useThemeMode();
-  const { languageMode, openKeybinds, openSettings } = useChat();
+  const {
+    languageMode,
+    openKeybinds,
+    openSettings,
+    tourOpen,
+    tourCompleted,
+    openTour,
+    closeTour,
+    markTourCompleted,
+  } = useChat();
   const [showEditor, setShowEditor] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [guidedCreationToken, setGuidedCreationToken] = useState(0);
@@ -38,6 +48,11 @@ export function ChatPage() {
   useEffect(() => {
     if (editor.worksheetLlmRevision > 0) setShowPreview(true);
   }, [editor.worksheetLlmRevision]);
+
+  useEffect(() => {
+    if (!tourCompleted) openTour();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startGuidedCreation = useCallback(() => {
     if (!canUseAi) {
@@ -80,6 +95,7 @@ export function ChatPage() {
                   <button
                     aria-label={`Bearbeitungs-Modus ${showEditor ? 'schließen' : 'öffnen'}`}
                     className="btn btn-lg rounded-box border-base-300 bg-secondary text-secondary-content h-auto min-h-0 w-12 flex-col gap-2 border px-2 py-5 shadow-sm"
+                    data-tour-id="side-panel-editor-toggle"
                     type="button"
                     onClick={() => setShowEditor((v) => !v)}
                   >
@@ -91,10 +107,7 @@ export function ChatPage() {
                 </div>
               }
             >
-              <EditorSidebar
-                canUseAi={canUseAi}
-                onStartGuidedCreation={handleStartGuidedCreation}
-              />
+              <EditorSidebar canUseAi={canUseAi} onStartGuidedCreation={handleStartGuidedCreation} />
             </SidePanel>
 
             <div
@@ -123,6 +136,7 @@ export function ChatPage() {
                   <button
                     aria-label={`Vorschau ${showPreview ? 'schließen' : 'öffnen'}`}
                     className="btn btn-lg rounded-box border-base-300 bg-primary text-primary-content h-auto min-h-0 w-12 flex-col gap-2 border px-2 py-5 shadow-sm"
+                    data-tour-id="side-panel-preview-toggle"
                     type="button"
                     onClick={() => setShowPreview((v) => !v)}
                   >
@@ -146,6 +160,14 @@ export function ChatPage() {
             />
           </div>
         </div>
+
+        <GuidedTour
+          open={tourOpen}
+          onClose={closeTour}
+          onComplete={markTourCompleted}
+          onOpenEditorPanel={() => setShowEditor(true)}
+          onOpenPreviewPanel={() => setShowPreview(true)}
+        />
       </section>
     </>
   );

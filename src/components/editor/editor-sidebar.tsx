@@ -475,6 +475,7 @@ export const EditorSidebar = memo(function EditorSidebar({
         ) : null}
         <button
           className="btn btn-secondary btn-lg w-full gap-2"
+          data-tour-id="kurs-herunterladen"
           disabled={orderedContent.length === 0 || aiBusy !== null || h5pLoading}
           type="button"
           onClick={() => {

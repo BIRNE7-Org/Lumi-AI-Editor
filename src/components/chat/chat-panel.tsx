@@ -608,6 +608,7 @@ export function ChatPanel({
               </div>
               <button
                 className="btn btn-outline btn-primary btn-lg gap-2"
+                data-tour-id="guided-creation-cta"
                 disabled={!canUseAi}
                 type="button"
                 onClick={onStartGuidedCreation}
@@ -737,6 +738,7 @@ export function ChatPanel({
             <button
               className={twMerge('btn btn-outline btn-lg', speech.isListening && 'btn-error')}
               data-chat-record-button="true"
+              data-tour-id="mic-record-button"
               disabled={
                 !speech.isListening &&
                 (!speech.sttSupported || !canUseAi || chat.loading || speech.isTranscribing)

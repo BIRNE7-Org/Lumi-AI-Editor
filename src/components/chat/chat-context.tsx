@@ -9,6 +9,11 @@ export function ChatProvider({
     setLanguageMode: (value: string) => void;
     openSettings: () => void;
     openKeybinds: () => void;
+    tourOpen: boolean;
+    tourCompleted: boolean;
+    openTour: () => void;
+    closeTour: () => void;
+    markTourCompleted: () => void;
   };
   children: React.ReactNode;
 }) {

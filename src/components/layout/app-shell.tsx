@@ -3,6 +3,7 @@ import {
   Cog6ToothIcon,
   CommandLineIcon,
   PlusIcon,
+  QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
@@ -16,6 +17,8 @@ import { SettingsModal } from '@components/settings/settings-modal';
 import { AppHeader } from '@components/layout/app-header';
 import { AppFooter } from '@components/layout/app-footer';
 import { ThemeToggle } from '@components/theme/theme-toggle';
+import { useOnboardingState } from '@components/onboarding/use-onboarding-state';
+import { HelpModal } from '@components/onboarding/help-modal';
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -33,6 +36,9 @@ export function AppShell({ children }: AppShellProps) {
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [keybindsOpen, setKeybindsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const onboarding = useOnboardingState();
 
   const chatContextValue = useMemo(
     () => ({
@@ -40,8 +46,13 @@ export function AppShell({ children }: AppShellProps) {
       setLanguageMode,
       openSettings: () => setSettingsOpen(true),
       openKeybinds: () => setKeybindsOpen(true),
+      tourOpen,
+      tourCompleted: onboarding.tourCompleted,
+      openTour: () => setTourOpen(true),
+      closeTour: () => setTourOpen(false),
+      markTourCompleted: onboarding.markTourCompleted,
     }),
-    [languageMode]
+    [languageMode, tourOpen, onboarding.tourCompleted, onboarding.markTourCompleted]
   );
 
   return (
@@ -58,6 +69,7 @@ export function AppShell({ children }: AppShellProps) {
                 <>
                   <button
                     className="btn btn-ghost btn-lg gap-2"
+                    data-tour-id="neues-gespraech"
                     type="button"
                     onClick={() => {
                       actions.chatCleared();
@@ -129,6 +141,7 @@ export function AppShell({ children }: AppShellProps) {
                   <select
                     id="language-mode-select"
                     className="select select-lg min-w-40 pr-8"
+                    data-tour-id="sprachmodus"
                     value={languageMode}
                     onChange={(event) => {
                       setLanguageMode(event.target.value);
@@ -156,6 +169,7 @@ export function AppShell({ children }: AppShellProps) {
                       ) : null}
                       <button
                         className="btn btn-lg gap-2"
+                        data-tour-id="ki-einstellungen"
                         type="button"
                         onClick={() => setSettingsOpen(true)}
                       >
@@ -165,6 +179,7 @@ export function AppShell({ children }: AppShellProps) {
                     </div>
                     <button
                       className="btn btn-ghost btn-lg gap-2"
+                      data-tour-id="tastenkuerzel"
                       type="button"
                       onClick={() => setKeybindsOpen(true)}
                     >
@@ -173,6 +188,15 @@ export function AppShell({ children }: AppShellProps) {
                     </button>
                   </>
                 ) : null}
+                <button
+                  className="btn btn-ghost btn-lg gap-2"
+                  data-tour-id="hilfe-button"
+                  type="button"
+                  onClick={() => setHelpOpen(true)}
+                >
+                  <QuestionMarkCircleIcon className="size-6" />
+                  Hilfe
+                </button>
                 <ThemeToggle />
               </>
             }
@@ -184,6 +208,15 @@ export function AppShell({ children }: AppShellProps) {
 
         <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
         <KeybindsModal open={keybindsOpen} onClose={() => setKeybindsOpen(false)} />
+        <HelpModal
+          open={helpOpen}
+          isEditorRoute={isEditorRoute}
+          onClose={() => setHelpOpen(false)}
+          onStartTour={() => {
+            setHelpOpen(false);
+            setTourOpen(true);
+          }}
+        />
       </ChatProvider>
     </div>
   );
