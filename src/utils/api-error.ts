@@ -36,3 +36,17 @@ export async function extractTechnicalFromResponse(response: Response): Promise<
     return `HTTP ${response.status} ${response.statusText}`;
   }
 }
+
+/** True when the error is an intentional request cancellation (e.g. via AbortController). */
+export function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    (error instanceof Error && error.name === 'AbortError')
+  );
+}
+
+/** Formats a raw network failure (offline, DNS, CORS, timeout, …) into a user-facing message. */
+export function buildNetworkErrorMessage(error: unknown): string {
+  const technical = error instanceof Error ? error.message : String(error);
+  return `Der Dienst konnte nicht erreicht werden. Bitte überprüfe deine Internetverbindung und versuche es erneut.\n\nTechnische Details (für den Support):\n${technical}`;
+}

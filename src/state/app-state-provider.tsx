@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { buildApiErrorMessage, extractTechnicalFromJson } from '@/utils/api-error';
+import {
+  buildApiErrorMessage,
+  buildNetworkErrorMessage,
+  extractTechnicalFromJson,
+  isAbortError,
+} from '@/utils/api-error';
 
 import { AppActionsContext, ChatStateContext, EditorStateContext } from '@state/app-state-contexts';
 import {
@@ -399,7 +404,8 @@ async function callOpenAI(
   apiEndpoint: string,
   apiToken: string,
   requiresModel: boolean,
-  apiModel: string
+  apiModel: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const body: Record<string, unknown> = { messages, temperature: 0.7 };
 
@@ -407,14 +413,21 @@ async function callOpenAI(
     body.model = apiModel;
   }
 
-  const response = await fetch(apiEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiToken}`,
-    },
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiToken}`,
+      },
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+    throw new Error(buildNetworkErrorMessage(error), { cause: error });
+  }
 
   if (!response.ok) {
     const technical = extractTechnicalFromJson(
@@ -447,6 +460,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const chatRef = useRef(chatState);
   const editorRef = useRef(editorState);
+  const activeRequestRef = useRef<AbortController | null>(null);
+
+  const cancelActiveRequest = useCallback(() => {
+    activeRequestRef.current?.abort();
+    activeRequestRef.current = null;
+  }, []);
 
   useEffect(() => {
     chatRef.current = chatState;
@@ -570,6 +589,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      const controller = new AbortController();
+      cancelActiveRequest();
+      activeRequestRef.current = controller;
+
       try {
         const chat = chatRef.current;
         const editor = editorRef.current;
@@ -595,8 +618,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           apiEndpoint,
           apiToken,
           PROVIDERS[provider].requiresModel,
-          apiModel
+          apiModel,
+          controller.signal
         );
+
+        if (activeRequestRef.current !== controller) return;
 
         const assistantContent = resolveAssistantContent(rawReply, applyWorksheetUpdate);
 
@@ -613,6 +639,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           ],
         }));
       } catch (error) {
+        if (isAbortError(error) || activeRequestRef.current !== controller) return;
         setChatState((prev) => ({
           ...prev,
           messages: [
@@ -626,10 +653,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           ],
         }));
       } finally {
-        setChatState((prev) => ({ ...prev, loading: false }));
+        if (activeRequestRef.current === controller) {
+          activeRequestRef.current = null;
+          setChatState((prev) => ({ ...prev, loading: false }));
+        }
       }
     },
-    [applyWorksheetUpdate]
+    [applyWorksheetUpdate, cancelActiveRequest]
   );
 
   const generateQuestion = useCallback<AppActions['generateQuestion']>(async (options) => {
@@ -703,6 +733,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           messages: [...prev.messages, { ...progressMessage, createdAt: Date.now() }],
         }));
 
+        const controller = new AbortController();
+        cancelActiveRequest();
+        activeRequestRef.current = controller;
+
         try {
           const systemPrompt = `${buildSystemPrompt(title, content, chatRef.current.languageMode)}
 
@@ -727,7 +761,8 @@ Behalte das [WORKSHEET_UPDATE]-Format aus dem structured_output_contract exakt b
             apiEndpoint,
             apiToken,
             PROVIDERS[provider].requiresModel,
-            apiModel
+            apiModel,
+            controller.signal
           );
 
           const assistantContent = resolveAssistantContent(
@@ -744,7 +779,10 @@ Behalte das [WORKSHEET_UPDATE]-Format aus dem structured_output_contract exakt b
             },
           };
         } finally {
-          setChatState((prev) => ({ ...prev, loading: false }));
+          if (activeRequestRef.current === controller) {
+            activeRequestRef.current = null;
+            setChatState((prev) => ({ ...prev, loading: false }));
+          }
         }
       }
 
@@ -775,7 +813,7 @@ Behalte das [WORKSHEET_UPDATE]-Format aus dem structured_output_contract exakt b
         },
       };
     },
-    [applyWorksheetCommand, applyWorksheetUpdate]
+    [applyWorksheetCommand, applyWorksheetUpdate, cancelActiveRequest]
   );
 
   const actions = useMemo<AppActions>(
@@ -787,6 +825,7 @@ Behalte das [WORKSHEET_UPDATE]-Format aus dem structured_output_contract exakt b
         })),
       chatMessagesSet: (messages) => setChatState((prev) => ({ ...prev, messages })),
       chatCleared: () => {
+        cancelActiveRequest();
         setChatState(getInitialChatState);
         setEditorState((prev) => ({
           ...getInitialEditorState(),
@@ -958,8 +997,9 @@ Behalte das [WORKSHEET_UPDATE]-Format aus dem structured_output_contract exakt b
       generateQuestion,
       generateText,
       sendChatMessage,
+      pendingRequestCancelled: cancelActiveRequest,
     }),
-    [sendMessage, generateQuestion, generateText, sendChatMessage]
+    [sendMessage, generateQuestion, generateText, sendChatMessage, cancelActiveRequest]
   );
 
   return (

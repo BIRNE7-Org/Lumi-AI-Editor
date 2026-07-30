@@ -40,6 +40,7 @@ export type AppActions = {
   chatMessageAdded: (message: ChatMessage) => void;
   chatMessagesSet: (messages: ChatMessage[]) => void;
   chatCleared: () => void;
+  pendingRequestCancelled: () => void;
   chatPreviewUpdated: (markdown: string, doc: PreviewDocument) => void;
   chatReadAloudToggled: () => void;
   chatSystemPromptChanged: (prompt: string | null) => void;

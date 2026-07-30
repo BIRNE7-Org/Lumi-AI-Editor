@@ -12,6 +12,7 @@ import { twMerge } from 'tailwind-merge';
 import { useAppActions, useChatState, useEditorState } from '@state';
 import { parseMessage } from '@components/editor/utils';
 import { useSpeech } from '@components/chat/use-speech';
+import { isAbortError } from '@/utils/api-error';
 
 type LanguageModeContent = {
   greetingText: string;
@@ -324,6 +325,8 @@ export function ChatPanel({
       return;
     }
 
+    actions.pendingRequestCancelled();
+
     const modeContent =
       LANGUAGE_MODE_CONTENT[languageModeRef.current] ?? LANGUAGE_MODE_CONTENT.standard;
     actions.chatMessagesSet([
@@ -420,6 +423,7 @@ export function ChatPanel({
           });
           setCreationState((prev) => ({ ...prev, step: 'done', aspects: value }));
         } catch (error) {
+          if (isAbortError(error)) return;
           actions.chatMessageAdded({
             id: crypto.randomUUID(),
             role: 'assistant',
