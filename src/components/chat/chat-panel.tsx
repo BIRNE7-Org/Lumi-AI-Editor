@@ -33,6 +33,17 @@ function withSuggestions(text: string, suggestions: string[]): string {
   return `${text}\n\n[VORSCHLÄGE: ${suggestions.join(' | ')}]`;
 }
 
+function buildSpeechText(text: string, suggestions: string[]): string {
+  if (suggestions.length === 0) {
+    return text;
+  }
+
+  const suggestionText = suggestions.join('. ');
+  return text
+    ? `${text}. Vorschläge: ${suggestionText}.`
+    : `Vorschläge: ${suggestionText}.`;
+}
+
 const LANGUAGE_MODE_CONTENT: Record<string, LanguageModeContent> = {
   leichte: {
     greetingText:
@@ -505,9 +516,9 @@ export function ChatPanel({
       return;
     }
 
-    const { text } = parseMessage(lastMessage.content);
+    const { text, suggestions } = parseMessage(lastMessage.content);
     lastReadMessageRef.current = lastMessage.id;
-    speak(text || lastMessage.content, lastMessage.id);
+    speak(buildSpeechText(text || lastMessage.content, suggestions), lastMessage.id);
   }, [chat.messages, chat.readAloudEnabled, speak, ttsSupported]);
 
   const handleSend = useCallback(async () => {
@@ -659,7 +670,10 @@ export function ChatPanel({
                               speech.stopSpeaking();
                               return;
                             }
-                            speech.speak(text || message.content, message.id);
+                            speech.speak(
+                              buildSpeechText(text || message.content, suggestions),
+                              message.id
+                            );
                           }}
                         >
                           {isSpeaking ? (
